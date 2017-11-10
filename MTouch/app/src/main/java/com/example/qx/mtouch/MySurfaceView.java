@@ -20,8 +20,8 @@ import java.util.Set;
 public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 {
     MultiTouchActivity activity;
-    Paint paint;
-    Paint paintl;
+    Paint paint;//画笔paint
+    Paint paintl;//画笔paint1
     HashMap<Integer,BNPoint> hm=new HashMap<>();
     static int countl=0;
     BNPoint bp;
@@ -29,9 +29,9 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     public MySurfaceView(MultiTouchActivity activity) {
         super(activity);
         this.activity=activity;
-        this.getHolder().addCallback(this);
-        paint=new Paint();
-        paint.setAntiAlias(true);
+        this.getHolder().addCallback(this);//设置生命周期回调接口的实现者
+        paint=new Paint();//创建画笔
+        paint.setAntiAlias(true);//打开抗锯齿
 
         paintl=new Paint();
         paintl.setAntiAlias(true);
@@ -50,6 +50,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         paintl.setStrokeWidth(5);
         paintl.setStyle(Paint.Style.STROKE);
 
+        //遍历触控点Map,对触控点一一进行绘制
         Set<Integer> ks=hm.keySet();
         for(int i:ks)
         {
@@ -63,19 +64,24 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     {
         int id=-1;
         try {
+            //获取触控的动作编号
             int action=e.getAction()&MotionEvent.ACTION_MASK;
+            //获取主、辅点id（down时主辅点id皆正确，up时辅点id正确，主点id要查询Map中剩下的一个点的id）
             int index=(e.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)
                     >>>MotionEvent.ACTION_POINTER_INDEX_SHIFT;
             id=e.getPointerId(index);
-            switch(action)
+            switch(action)                                    //>>>的意思是无符号右移
             {
-                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_DOWN: //主点down
+                    //向Map中记录一个新点
                     hm.put(id, new BNPoint(e.getX(id),e.getY(id),getColor(),countl++));
                     break;
-                case MotionEvent.ACTION_POINTER_DOWN:
+                case MotionEvent.ACTION_POINTER_DOWN://辅点down
+                    //向Map中记录一个新点
                     hm.put(id,new BNPoint(e.getX(id),e.getY(id),getColor(),countl++));
                     break;
-                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_MOVE://主/辅点move
+                    //不论主/辅点Move都更新其位置
                     int count=e.getPointerCount();
                     for(int i=0;i<count;i++)
                     {
@@ -90,14 +96,18 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         }
                     }
                     break;
-                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_UP://主点up
+                    //在本应用中主点UP则只需要清空Map即可，在其他一些应用中需要操作的
+                    //则取出Map中唯一剩下的点操作即可
                     hm.clear();
                     countl=0;
                     break;
-                case MotionEvent.ACTION_POINTER_UP:
+                case MotionEvent.ACTION_POINTER_UP://辅点up
+                    //从Map中删除对应id的辅点
                     hm.remove(id);
                     break;
             }
+            //重绘画面
             repaint();
         }
         catch(Exception ea)
@@ -110,6 +120,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         return true;
     }
 
+    //获取颜色编号的方法
     public int[] getColor()
     {
         int[] result=new int[4];
@@ -130,12 +141,13 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     }
 
+    //自己为SurfaceView写的重绘方法
     public void repaint() throws Exception {
         SurfaceHolder holder=this.getHolder();
-        Canvas canvas=holder.lockCanvas();
+        Canvas canvas=holder.lockCanvas();//获取画布
         try {
             synchronized (holder){
-                onDraw(canvas);
+                onDraw(canvas);//绘制
             }
         }
         catch(Exception e)
@@ -152,7 +164,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     }
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
+    public void surfaceDestroyed(SurfaceHolder holder) {//销毁时被调用
 
     }
 }
